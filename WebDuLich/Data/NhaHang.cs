@@ -37,7 +37,7 @@ namespace WebDuLich.Data
 		[Required]
 		[Column("id_tinh")]
 		[StringLength(10)]
-		public string MaTinh { get; set; }
+		public int MaTinh { get; set; }
 
 		[Column("loai_am_thuc")]
 		[StringLength(100)]

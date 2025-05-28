@@ -109,12 +109,14 @@ namespace WebDuLich.Data
 			modelBuilder.Entity<DatPhong>()
    				.HasOne(d => d.Phong)
 				.WithMany(p => p.DatPhongs)
-				.HasForeignKey(d => d.MaPhong);
-			// DatBan -> BanNhaHang
+				.HasForeignKey(d => d.MaPhong)
+				.OnDelete(DeleteBehavior.Restrict); // hoặc .NoAction
+													// DatBan -> BanNhaHang
 			modelBuilder.Entity<DatBan>()
 				.HasOne(d => d.Ban)
 				.WithMany()
-				.HasForeignKey(d => d.MaBan);
+				.HasForeignKey(d => d.MaBan)
+				.OnDelete(DeleteBehavior.Restrict); // hoặc .NoAction
 			modelBuilder.Entity<GioiThieuWebsite>()
 				.HasOne(g => g.NguoiCapNhat)
 				.WithMany()
@@ -125,7 +127,15 @@ namespace WebDuLich.Data
 				.HasForeignKey(p => p.MaKhachSan);
 			modelBuilder.Entity<NguoiDung>()
 				.Property(nd => nd.Gioitinh)
-				.HasConversion<string>();.
+				.HasConversion<string>();
+			modelBuilder.Entity<PhongKhachSan>()
+				.Property(p => p.Gia)
+				.HasPrecision(18, 2); // 18 chữ số tổng cộng, 2 chữ số sau dấu phẩy
+			modelBuilder.Entity<BanNhaHang>()
+				.Property(p => p.Gia)
+				.HasPrecision(18, 2); // 18 chữ số tổng cộng, 2 chữ số sau dấu phẩy
+
+
 		}
 	}
 }

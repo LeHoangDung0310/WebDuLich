@@ -36,8 +36,8 @@ namespace WebDuLich.Data
 		[StringLength(50)]
 		public LoaiPhongKhachSan LoaiPhong { get; set; }
 
-		[Column("gia")]
 		[DataType(DataType.Currency)]
+		[Column(TypeName = "decimal(18,2)")]
 		public decimal Gia { get; set; }
 
 		[Column("suc_chua")]

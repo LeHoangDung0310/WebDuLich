@@ -15,8 +15,9 @@ namespace WebDuLich.Data
 		[StringLength(50)]
 		public string TenDangNhap { get; set; }
 
+		[Required(ErrorMessage = "Mật khẩu không được để trống")]
+		[MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
 		[Column("MatKhau")]
-		[StringLength(12)]
 		public string MatKhau { get; set; }
 
 		[Column("MaQuyen")]

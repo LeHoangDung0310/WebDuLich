@@ -26,7 +26,7 @@ namespace WebDuLich.Data
 
 		[Column("MaTinh")]
 		[StringLength(10)]
-		public string MaTinh { get; set; }
+		public int MaTinh { get; set; }
 
 		[Column("NgayTao")]
 		[DatabaseGenerated(DatabaseGeneratedOption.Computed)]

@@ -36,6 +36,10 @@ namespace WebDuLich.Data
 		[Column("MoTa")]
 		public string MoTa { get; set; }
 
+		[DataType(DataType.Currency)]
+		[Column(TypeName = "decimal(18,2)")]
+		public decimal Gia { get; set; }
+
 		// Navigation properties
 		[ForeignKey("MaNhaHang")]
 		public NhaHang NhaHang { get; set; }
