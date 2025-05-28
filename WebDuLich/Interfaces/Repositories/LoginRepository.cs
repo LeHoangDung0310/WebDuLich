@@ -30,7 +30,7 @@ namespace WebDuLich.Interfaces.Repositories
 				return new LoginResponse
 				{
 					Success = false,
-					Message = "Tài khoản không tồn tại"
+					Message = "Tai Khoan hoac mật khẩu không đúng"
 				};
 			}
 
@@ -39,7 +39,7 @@ namespace WebDuLich.Interfaces.Repositories
 				return new LoginResponse
 				{
 					Success = false,
-					Message = "Mật khẩu không đúng"
+					Message = "Tai Khoan hoac mật khẩu không đúng"
 				};
 			}
 
