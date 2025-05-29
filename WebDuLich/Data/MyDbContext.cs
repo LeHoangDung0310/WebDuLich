@@ -25,10 +25,22 @@ namespace WebDuLich.Data
 		public DbSet<HinhAnhKhachSan> HinhAnhKhachSans { get; set; }
 		public DbSet<HinhAnhNhaHang> HinhAnhNhaHangs { get; set; }
 		public DbSet<GioiThieuWebsite> GioiThieuWebsites { get; set; }
+		public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
+
+			modelBuilder.Entity<RefreshToken>(entity =>
+			{
+				entity.ToTable("REFRESHTOKEN");
+				entity.HasKey(e => e.Id);
+				
+				entity.HasOne(d => d.TaiKhoan)
+					.WithMany()
+					.HasForeignKey(d => d.UserId)
+					.OnDelete(DeleteBehavior.Cascade);
+			});
 
 			// TaiKhoan relationships
 			modelBuilder.Entity<TaiKhoan>()
@@ -134,8 +146,13 @@ namespace WebDuLich.Data
 			modelBuilder.Entity<BanNhaHang>()
 				.Property(p => p.Gia)
 				.HasPrecision(18, 2); // 18 chữ số tổng cộng, 2 chữ số sau dấu phẩy
-
-
+			modelBuilder.Entity<RefreshToken>(entity =>
+			{
+				entity.HasOne(rt => rt.TaiKhoan)
+					  .WithMany()
+					  .HasForeignKey(rt => rt.UserId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
 		}
 	}
 }

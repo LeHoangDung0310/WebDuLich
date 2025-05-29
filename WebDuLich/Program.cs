@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using WebDuLich.Helpers;
 using Microsoft.EntityFrameworkCore;
 using WebDuLich.Data;
 using WebDuLich.Interfaces.IRepositories;
@@ -12,10 +16,31 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyDbContext>(options =>
-{
-	options.UseSqlServer(builder.Configuration.GetConnectionString("MyDB"));
-});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MyDB"))
+           .EnableSensitiveDataLogging()
+           .EnableDetailedErrors()
+);
 builder.Services.AddAuthentication();
+
+// Configure JWT
+var secretKey = builder.Configuration["AppSettings:SecretKey"];
+#pragma warning disable CS8604 // Possible null reference argument.
+var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
+#pragma warning restore CS8604 // Possible null reference argument.
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(opt =>
+	{
+		opt.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuer = false,
+			ValidateAudience = false,
+			ValidateIssuerSigningKey = true,
+			IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes),
+			ClockSkew = TimeSpan.Zero
+		};
+	});
+
 // Add this in your Program.cs
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
 var app = builder.Build();

@@ -6,5 +6,6 @@ namespace WebDuLich.Interfaces.IRepositories
 	{
 		Task<LoginResponse> Login(LoginDTO loginDTO);
 		Task<bool> CheckExistUsername(string username);
+		Task<TokenModel> RenewToken(RefreshTokenDTO model);
 	}
 }
