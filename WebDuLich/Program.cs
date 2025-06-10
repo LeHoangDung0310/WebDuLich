@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WebDuLich.Helpers;
@@ -14,19 +14,52 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+	c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "WebDuLich", Version = "v1" });
+
+	// Thêm cấu hình bảo mật cho Swagger
+	c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+	{
+		Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+		Name = "Authorization",
+		In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+		Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+		Scheme = "Bearer"
+	});
+
+	c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+	{
+		{
+			new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+			{
+				Reference = new Microsoft.OpenApi.Models.OpenApiReference
+				{
+					Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+					Id = "Bearer"
+				}
+			},
+			new string[] {}
+		}
+	});
+});
+
 builder.Services.AddDbContext<MyDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MyDB"))
-           .EnableSensitiveDataLogging()
-           .EnableDetailedErrors()
+	options.UseSqlServer(builder.Configuration.GetConnectionString("MyDB"))
 );
-builder.Services.AddAuthentication();
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowReactApp",
+		builder => builder
+			.WithOrigins("http://localhost:5173") // Frontend origin
+			.AllowAnyMethod()
+			.AllowAnyHeader()
+			.AllowCredentials());
+});
 
 // Configure JWT
 var secretKey = builder.Configuration["AppSettings:SecretKey"];
-#pragma warning disable CS8604 // Possible null reference argument.
-var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
-#pragma warning restore CS8604 // Possible null reference argument.
+var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey ?? throw new InvalidOperationException("JWT secret key is not configured"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	.AddJwtBearer(opt =>
@@ -41,8 +74,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 		};
 	});
 
-// Add this in your Program.cs
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
+builder.Services.AddScoped<ITaiKhoanRepository, TaiKhoanRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -53,8 +87,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // cau hinh middleware Thay cho Configure
 
+// Đặt UseCors trước UseAuthentication và UseAuthorization
+app.UseCors("AllowReactApp");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

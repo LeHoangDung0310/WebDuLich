@@ -8,6 +8,7 @@ namespace WebDuLich.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[AllowAnonymous]
 	public class LoginController : ControllerBase
 	{
 		private readonly ILoginRepository _loginRepository;
@@ -57,13 +58,13 @@ namespace WebDuLich.Controllers
 			{
 				var result = await _loginRepository.RenewToken(model);
 				if (result == null)
-					return BadRequest(new { Success = false, Message = "Invalid token" });
+					return BadRequest(new { Success = false, Message = "Token không hợp lệ" });
 
 				return Ok(new { Success = true, Data = result });
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(500, new { Success = false, Message = ex.Message });
+				return StatusCode(500, new { Success = false, Message = "Lỗi khi làm mới token: " + ex.Message });
 			}
 		}
 	}

@@ -2,8 +2,8 @@
 {
     public class LoginDTO
     {
-        public string TenDangNhap { get; set; }
-        public string MatKhau { get; set; }
+        public string TenDangNhap { get; set; }  // Đổi username thành TenDangNhap
+        public string MatKhau { get; set; }      // Đổi password thành MatKhau
     }
 
     public class LoginResponse

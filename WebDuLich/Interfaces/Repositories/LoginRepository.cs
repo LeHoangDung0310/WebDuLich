@@ -177,23 +177,34 @@ namespace WebDuLich.Interfaces.Repositories
 				return new LoginResponse
 				{
 					Success = false,
-					Message = "Tài khoản hoặc mật khẩu không đúng"
+					Message = "Tên đăng nhập hoặc mật khẩu không đúng"
 				};
 			}
 
-			var tokens = await GenerateTokens(taiKhoan);
-
-			return new LoginResponse
+			try
 			{
-				Success = true,
-				Message = "Đăng nhập thành công",
-				MaTK = taiKhoan.MaTK,
-				TenDangNhap = taiKhoan.TenDangNhap,
-				MaQuyen = taiKhoan.MaQuyen,
-				TenQuyen = taiKhoan.QuyenTaiKhoan?.TenQuyen,
-				Token = tokens.AccessToken,
-				RefreshToken = tokens.RefreshToken
-			};
+				var tokens = await GenerateTokens(taiKhoan);
+
+				return new LoginResponse
+				{
+					Success = true,
+					Message = "Đăng nhập thành công",
+					MaTK = taiKhoan.MaTK,
+					TenDangNhap = taiKhoan.TenDangNhap,
+					MaQuyen = taiKhoan.MaQuyen,
+					TenQuyen = taiKhoan.QuyenTaiKhoan?.TenQuyen,
+					Token = tokens.AccessToken,
+					RefreshToken = tokens.RefreshToken
+				};
+			}
+			catch (Exception ex)
+			{
+				return new LoginResponse
+				{
+					Success = false,
+					Message = "Lỗi trong quá trình đăng nhập: " + ex.Message
+				};
+			}
 		}
 
 		public Task<bool> CheckExistUsername(string username)
