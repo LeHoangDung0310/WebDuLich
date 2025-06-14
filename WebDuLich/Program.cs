@@ -147,6 +147,8 @@ builder.Services.AddAuthentication(opt =>
 
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
 builder.Services.AddScoped<ITaiKhoanRepository, TaiKhoanRepository>();
+builder.Services.AddScoped<IMienRepository, MienRepository>();
+builder.Services.AddScoped<ITinhRepository, TinhRepository>();
 
 var app = builder.Build();
 
