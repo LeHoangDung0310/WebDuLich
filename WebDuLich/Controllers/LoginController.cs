@@ -24,14 +24,31 @@ namespace WebDuLich.Controllers
 			try
 			{
 				var result = await _loginRepository.Login(loginDTO);
-				if (result.Success)
+				System.Diagnostics.Debug.WriteLine($"Login attempt for user {loginDTO.TenDangNhap} - Success: {result.Success}"); if (result.Success)
 				{
-					return Ok(result);
+					// Log đầy đủ thông tin login response
+					System.Diagnostics.Debug.WriteLine($"Login successful - User: {result.TenDangNhap}, Role: {result.MaQuyen}, Token length: {result.Token?.Length ?? 0}");
+					foreach (var claim in HttpContext.User.Claims)
+					{
+						System.Diagnostics.Debug.WriteLine($"Claim: {claim.Type} = {claim.Value}");
+					}
+					return Ok(new
+					{
+						success = true,
+						message = "Đăng nhập thành công",
+						maTK = result.MaTK,
+						tenDangNhap = result.TenDangNhap,
+						maQuyen = result.MaQuyen,
+						tenQuyen = result.TenQuyen,
+						token = result.Token,
+						refreshToken = result.RefreshToken
+					});
 				}
 				return BadRequest(result);
 			}
 			catch (Exception ex)
 			{
+				System.Diagnostics.Debug.WriteLine($"Login error: {ex}");
 				return StatusCode(500, new { Success = false, Message = ex.Message });
 			}
 		}

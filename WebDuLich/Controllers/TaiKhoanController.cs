@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebDuLich.Interfaces.dto;
 using WebDuLich.Interfaces.IRepositories;
 
@@ -7,7 +8,7 @@ namespace WebDuLich.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]  // Chỉ Admin mới có quyền truy cập
+    [Authorize] // Yêu cầu đăng nhập
     public class TaiKhoanController : ControllerBase
     {
         private readonly ITaiKhoanRepository _taiKhoanRepository;
@@ -19,6 +20,7 @@ namespace WebDuLich.Controllers
 
         // GET: api/TaiKhoan
         [HttpGet]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được xem danh sách
         public async Task<IActionResult> GetTaiKhoans()
         {
             try
@@ -34,6 +36,7 @@ namespace WebDuLich.Controllers
 
         // GET: api/TaiKhoan/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được xem chi tiết
         public async Task<IActionResult> GetTaiKhoan(string id)
         {
             try
@@ -52,6 +55,7 @@ namespace WebDuLich.Controllers
 
         // POST: api/TaiKhoan
         [HttpPost]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được thêm
         public async Task<IActionResult> CreateTaiKhoan(TaiKhoanDTO taiKhoanDTO)
         {
             try
@@ -67,6 +71,7 @@ namespace WebDuLich.Controllers
 
         // PUT: api/TaiKhoan/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được sửa
         public async Task<IActionResult> UpdateTaiKhoan(string id, TaiKhoanUpdateDTO taiKhoanDTO)
         {
             try
@@ -85,6 +90,7 @@ namespace WebDuLich.Controllers
 
         // DELETE: api/TaiKhoan/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được xóa
         public async Task<IActionResult> DeleteTaiKhoan(string id)
         {
             try

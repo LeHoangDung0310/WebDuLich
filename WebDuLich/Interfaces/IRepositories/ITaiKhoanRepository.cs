@@ -5,10 +5,10 @@ namespace WebDuLich.Interfaces.IRepositories
 {
     public interface ITaiKhoanRepository
     {
-        Task<IEnumerable<TaiKhoan>> GetAllTaiKhoanAsync();
-        Task<TaiKhoan> GetTaiKhoanByIdAsync(string maTK);
-        Task<TaiKhoan> CreateTaiKhoanAsync(TaiKhoanDTO taiKhoanDTO);
-        Task<TaiKhoan> UpdateTaiKhoanAsync(string maTK, TaiKhoanUpdateDTO taiKhoanDTO);
+        Task<IEnumerable<TaiKhoanDTO>> GetAllTaiKhoanAsync();
+        Task<TaiKhoanDTO> GetTaiKhoanByIdAsync(string maTK);
+        Task<TaiKhoanDTO> CreateTaiKhoanAsync(TaiKhoanDTO taiKhoanDTO);
+        Task<TaiKhoanDTO> UpdateTaiKhoanAsync(string maTK, TaiKhoanUpdateDTO taiKhoanDTO);
         Task<bool> DeleteTaiKhoanAsync(string maTK);
         Task<bool> TaiKhoanExistsAsync(string maTK);
     }

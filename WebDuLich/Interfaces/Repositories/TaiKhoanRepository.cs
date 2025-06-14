@@ -14,25 +14,38 @@ namespace WebDuLich.Interfaces.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<TaiKhoan>> GetAllTaiKhoanAsync()
+        public async Task<IEnumerable<TaiKhoanDTO>> GetAllTaiKhoanAsync()
         {
             return await _context.TaiKhoans
-                .Include(t => t.QuyenTaiKhoan)
+                .Select(t => new TaiKhoanDTO
+                {
+                    MaTK = t.MaTK,
+                    TenDangNhap = t.TenDangNhap,
+                    MatKhau = t.MatKhau,
+                    MaQuyen = t.MaQuyen
+                })
                 .ToListAsync();
         }
 
-        public async Task<TaiKhoan> GetTaiKhoanByIdAsync(string maTK)
+        public async Task<TaiKhoanDTO> GetTaiKhoanByIdAsync(string maTK)
         {
             return await _context.TaiKhoans
-                .Include(t => t.QuyenTaiKhoan)
-                .FirstOrDefaultAsync(t => t.MaTK == maTK);
+                .Where(t => t.MaTK == maTK)
+                .Select(t => new TaiKhoanDTO
+                {
+                    MaTK = t.MaTK,
+                    TenDangNhap = t.TenDangNhap,
+                    MatKhau = t.MatKhau,
+                    MaQuyen = t.MaQuyen
+                })
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<TaiKhoan> CreateTaiKhoanAsync(TaiKhoanDTO taiKhoanDTO)
+        public async Task<TaiKhoanDTO> CreateTaiKhoanAsync(TaiKhoanDTO taiKhoanDTO)
         {
             var taiKhoan = new TaiKhoan
             {
-                MaTK = Guid.NewGuid().ToString().Substring(0, 10),
+                MaTK = taiKhoanDTO.MaTK,
                 TenDangNhap = taiKhoanDTO.TenDangNhap,
                 MatKhau = BCrypt.Net.BCrypt.HashPassword(taiKhoanDTO.MatKhau),
                 MaQuyen = taiKhoanDTO.MaQuyen
@@ -40,10 +53,17 @@ namespace WebDuLich.Interfaces.Repositories
 
             _context.TaiKhoans.Add(taiKhoan);
             await _context.SaveChangesAsync();
-            return taiKhoan;
+
+            return new TaiKhoanDTO
+            {
+                MaTK = taiKhoan.MaTK,
+                TenDangNhap = taiKhoan.TenDangNhap,
+                MatKhau = taiKhoan.MatKhau,
+                MaQuyen = taiKhoan.MaQuyen
+            };
         }
 
-        public async Task<TaiKhoan> UpdateTaiKhoanAsync(string maTK, TaiKhoanUpdateDTO taiKhoanDTO)
+        public async Task<TaiKhoanDTO> UpdateTaiKhoanAsync(string maTK, TaiKhoanUpdateDTO taiKhoanDTO)
         {
             var taiKhoan = await _context.TaiKhoans.FindAsync(maTK);
             if (taiKhoan == null)
@@ -57,7 +77,14 @@ namespace WebDuLich.Interfaces.Repositories
             taiKhoan.MaQuyen = taiKhoanDTO.MaQuyen;
 
             await _context.SaveChangesAsync();
-            return taiKhoan;
+
+            return new TaiKhoanDTO
+            {
+                MaTK = taiKhoan.MaTK,
+                TenDangNhap = taiKhoan.TenDangNhap,
+                MatKhau = taiKhoan.MatKhau,
+                MaQuyen = taiKhoan.MaQuyen
+            };
         }
 
         public async Task<bool> DeleteTaiKhoanAsync(string maTK)

@@ -22,11 +22,30 @@ namespace WebDuLich.Interfaces.Repositories
 			_context = context;
 			_configuration = configuration;
 		}
-
 		private async Task<TokenModel> GenerateTokens(TaiKhoan taiKhoan)
 		{
+			if (taiKhoan == null)
+			{
+				throw new ArgumentNullException(nameof(taiKhoan));
+			}
+
+			// Đảm bảo load QuyenTaiKhoan
+			if (taiKhoan.QuyenTaiKhoan == null)
+			{
+				var loadedTaiKhoan = await _context.TaiKhoans
+					.Include(t => t.QuyenTaiKhoan)
+					.FirstOrDefaultAsync(t => t.MaTK == taiKhoan.MaTK);
+
+				if (loadedTaiKhoan == null)
+				{
+					throw new InvalidOperationException($"Unable to load account with ID {taiKhoan.MaTK}");
+				}
+				taiKhoan = loadedTaiKhoan;
+			}
+
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
-			var secretKeyBytes = Encoding.UTF8.GetBytes(_configuration["AppSettings:SecretKey"]);
+			var secretKey = _configuration["AppSettings:SecretKey"] ?? throw new InvalidOperationException("JWT secret key not configured");
+			var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
 
 			// Tạo token identifier
 			var tokenId = Guid.NewGuid().ToString();
@@ -37,14 +56,16 @@ namespace WebDuLich.Interfaces.Repositories
 				{
 					new Claim(ClaimTypes.Name, taiKhoan.TenDangNhap),
 					new Claim(ClaimTypes.NameIdentifier, taiKhoan.MaTK),
-					new Claim(ClaimTypes.Role, taiKhoan.MaQuyen),
+					new Claim(ClaimTypes.Role, taiKhoan.MaQuyen ?? ""), // Ensure MaQuyen is not null
 					new Claim("UserName", taiKhoan.TenDangNhap),
-					new Claim(JwtRegisteredClaimNames.Jti, tokenId), // Thêm JWT ID claim
+					new Claim(JwtRegisteredClaimNames.Jti, tokenId),
+					new Claim("Role", taiKhoan.MaQuyen ?? ""), // Additional role claim for debugging
+					new Claim("TenQuyen", taiKhoan.QuyenTaiKhoan?.TenQuyen ?? "") // Include role name for debugging
 				}),
 				Expires = DateTime.UtcNow.AddMinutes(20),
 				SigningCredentials = new SigningCredentials(
 					new SymmetricSecurityKey(secretKeyBytes),
-					SecurityAlgorithms.HmacSha256Signature)
+					SecurityAlgorithms.HmacSha256) // Changed from HmacSha256Signature to match validation
 			};
 
 			var token = jwtTokenHandler.CreateToken(tokenDescription);
@@ -95,11 +116,17 @@ namespace WebDuLich.Interfaces.Repositories
 				throw new Exception($"Error generating tokens: {ex.InnerException?.Message ?? ex.Message}", ex);
 			}
 		}
-
-		public async Task<TokenModel> RenewToken(RefreshTokenDTO model)
+		public async Task<TokenModel?> RenewToken(RefreshTokenDTO model)
 		{
+			if (model?.AccessToken == null || model.RefreshToken == null)
+			{
+				System.Diagnostics.Debug.WriteLine("[Token Debug] Invalid refresh token request - missing tokens");
+				return null;
+			}
+
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
-			var secretKeyBytes = Encoding.UTF8.GetBytes(_configuration["AppSettings:SecretKey"]);
+			var secretKey = _configuration["AppSettings:SecretKey"] ?? throw new InvalidOperationException("JWT secret key not configured");
+			var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
 			var tokenValidateParam = new TokenValidationParameters
 			{
 				ValidateIssuer = false,
@@ -112,22 +139,32 @@ namespace WebDuLich.Interfaces.Repositories
 
 			try
 			{
-				// Xác thực JWT cũ
+				System.Diagnostics.Debug.WriteLine($"[Token Debug] Validating token...");
 				var tokenInVerification = jwtTokenHandler.ValidateToken(
 					model.AccessToken,
 					tokenValidateParam,
 					out var validatedToken);
 
-				// Kiểm tra thuật toán
+				// Kiểm tra thuật toán và log claims
 				if (validatedToken is JwtSecurityToken jwtSecurityToken)
 				{
+					var claims = jwtSecurityToken.Claims.Select(c => $"{c.Type}: {c.Value}");
+					System.Diagnostics.Debug.WriteLine($"[Token Debug] Token claims: {string.Join(", ", claims)}");
+					System.Diagnostics.Debug.WriteLine($"[Token Debug] Token algorithm: {jwtSecurityToken.Header.Alg}");
+
 					var result = jwtSecurityToken.Header.Alg.Equals(
 						SecurityAlgorithms.HmacSha256,
 						StringComparison.InvariantCultureIgnoreCase);
 					if (!result)
 					{
+						System.Diagnostics.Debug.WriteLine("[Token Debug] Algorithm validation failed");
 						return null;
 					}
+				}
+				else
+				{
+					System.Diagnostics.Debug.WriteLine("[Token Debug] Invalid token format");
+					return null;
 				}
 
 				// Kiểm tra refresh token trong db
@@ -135,22 +172,35 @@ namespace WebDuLich.Interfaces.Repositories
 					.FirstOrDefaultAsync(x => x.Token == model.RefreshToken);
 
 				if (storedToken == null)
+				{
+					System.Diagnostics.Debug.WriteLine("[Token Debug] Refresh token not found in database");
 					return null;
+				}
 
 				// Kiểm tra refresh token đã sử dụng/thu hồi chưa
 				if (storedToken.IsUsed || storedToken.IsRevoked)
+				{
+					System.Diagnostics.Debug.WriteLine("[Token Debug] Refresh token is used or revoked");
 					return null;
+				}
 
 				// Kiểm tra refresh token còn hạn không
 				if (storedToken.ExpiredAt < DateTime.UtcNow)
+				{
+					System.Diagnostics.Debug.WriteLine("[Token Debug] Refresh token has expired");
 					return null;
+				}
 
 				// Lấy thông tin user
 				var taiKhoan = await _context.TaiKhoans
+					.Include(t => t.QuyenTaiKhoan)  // Make sure to include role information
 					.FirstOrDefaultAsync(x => x.MaTK == storedToken.UserId);
 
 				if (taiKhoan == null)
+				{
+					System.Diagnostics.Debug.WriteLine("[Token Debug] User not found");
 					return null;
+				}
 
 				// Đánh dấu token cũ đã sử dụng
 				storedToken.IsUsed = true;
@@ -158,22 +208,31 @@ namespace WebDuLich.Interfaces.Repositories
 				await _context.SaveChangesAsync();
 
 				// Tạo token mới
+				System.Diagnostics.Debug.WriteLine($"[Token Debug] Generating new tokens for user {taiKhoan.TenDangNhap} with role {taiKhoan.MaQuyen}");
 				return await GenerateTokens(taiKhoan);
 			}
-			catch
+			catch (Exception ex)
 			{
+				System.Diagnostics.Debug.WriteLine($"[Token Debug] Error in token renewal: {ex.Message}");
 				return null;
 			}
 		}
-
 		public async Task<LoginResponse> Login(LoginDTO loginDTO)
 		{
+			System.Diagnostics.Debug.WriteLine($"[Login Debug] Attempting login for user: {loginDTO?.TenDangNhap}");
+
+			if (loginDTO == null)
+			{
+				throw new ArgumentNullException(nameof(loginDTO));
+			}
+
 			var taiKhoan = await _context.TaiKhoans
 				.Include(x => x.QuyenTaiKhoan)
 				.FirstOrDefaultAsync(x => x.TenDangNhap == loginDTO.TenDangNhap);
 
-			if (taiKhoan == null || taiKhoan.MatKhau != loginDTO.MatKhau)
+			if (taiKhoan == null)
 			{
+				System.Diagnostics.Debug.WriteLine($"[Login Debug] User not found: {loginDTO.TenDangNhap}");
 				return new LoginResponse
 				{
 					Success = false,
@@ -181,18 +240,37 @@ namespace WebDuLich.Interfaces.Repositories
 				};
 			}
 
+			if (taiKhoan.MatKhau != loginDTO.MatKhau)
+			{
+				System.Diagnostics.Debug.WriteLine($"[Login Debug] Invalid password for user: {loginDTO.TenDangNhap}");
+				return new LoginResponse
+				{
+					Success = false,
+					Message = "Tên đăng nhập hoặc mật khẩu không đúng"
+				};
+			}
+
+			System.Diagnostics.Debug.WriteLine($"[Login Debug] User found: {taiKhoan.TenDangNhap}, Role: {taiKhoan.MaQuyen}, RoleName: {taiKhoan.QuyenTaiKhoan?.TenQuyen}");
+
 			try
 			{
 				var tokens = await GenerateTokens(taiKhoan);
+				if (tokens == null)
+				{
+					throw new InvalidOperationException("Failed to generate authentication tokens");
+				}
+
+				// Log token generation success
+				System.Diagnostics.Debug.WriteLine($"Generated token for user {taiKhoan.TenDangNhap} with role {taiKhoan.MaQuyen}");
 
 				return new LoginResponse
 				{
 					Success = true,
 					Message = "Đăng nhập thành công",
-					MaTK = taiKhoan.MaTK,
-					TenDangNhap = taiKhoan.TenDangNhap,
-					MaQuyen = taiKhoan.MaQuyen,
-					TenQuyen = taiKhoan.QuyenTaiKhoan?.TenQuyen,
+					MaTK = taiKhoan.MaTK ?? "",
+					TenDangNhap = taiKhoan.TenDangNhap ?? "",
+					MaQuyen = taiKhoan.MaQuyen ?? "",
+					TenQuyen = taiKhoan.QuyenTaiKhoan?.TenQuyen ?? "",
 					Token = tokens.AccessToken,
 					RefreshToken = tokens.RefreshToken
 				};
