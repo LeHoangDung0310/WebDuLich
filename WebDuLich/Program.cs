@@ -150,6 +150,7 @@ builder.Services.AddScoped<ITaiKhoanRepository, TaiKhoanRepository>();
 builder.Services.AddScoped<IMienRepository, MienRepository>();
 builder.Services.AddScoped<ITinhRepository, TinhRepository>();
 builder.Services.AddScoped<INguoiDungRepository, NguoiDungRepository>();
+builder.Services.AddScoped<IQuyenTKRepository, QuyenTKRepository>();
 
 var app = builder.Build();
 
