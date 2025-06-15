@@ -149,6 +149,7 @@ builder.Services.AddScoped<ILoginRepository, LoginRepository>();
 builder.Services.AddScoped<ITaiKhoanRepository, TaiKhoanRepository>();
 builder.Services.AddScoped<IMienRepository, MienRepository>();
 builder.Services.AddScoped<ITinhRepository, TinhRepository>();
+builder.Services.AddScoped<INguoiDungRepository, NguoiDungRepository>();
 
 var app = builder.Build();
 
