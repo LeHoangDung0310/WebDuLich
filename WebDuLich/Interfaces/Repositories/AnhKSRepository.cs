@@ -77,6 +77,7 @@ namespace WebDuLich.Interfaces.Repositories
             if (anhKS == null)
                 return null;
 
+            anhKS.MaKhachSan = anhKSDTO.MaKhachSan;
             anhKS.DuongDanAnh = anhKSDTO.DuongDanAnh;
             await _context.SaveChangesAsync();
 
