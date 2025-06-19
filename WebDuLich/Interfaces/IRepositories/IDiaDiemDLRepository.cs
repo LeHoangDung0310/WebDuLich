@@ -7,7 +7,7 @@ namespace WebDuLich.Interfaces.IRepositories
         Task<IEnumerable<DiaDiemDLDTO>> GetAllDiaDiemDLAsync();
         Task<DiaDiemDLDTO> GetDiaDiemDLByIdAsync(string maDiaDiem);
         Task<IEnumerable<DiaDiemDLDTO>> GetDiaDiemDLByTinhAsync(int maTinh);
-        Task<IEnumerable<DiaDiemDLDTO>> GetDiaDiemDLByTaiKhoanAsync(string maTaiKhoan);
+
         Task<DiaDiemDLDTO> CreateDiaDiemDLAsync(string maTaiKhoan, DiaDiemDLCreateDTO diaDiemDLDTO);
         Task<DiaDiemDLDTO> UpdateDiaDiemDLAsync(string maDiaDiem, DiaDiemDLUpdateDTO diaDiemDLDTO);
         Task<bool> DeleteDiaDiemDLAsync(string maDiaDiem);

@@ -68,32 +68,9 @@ namespace WebDuLich.Controllers
             }
         }
 
-        // GET: api/DiaDiemDL/TaiKhoan/5
-        [HttpGet("TaiKhoan/{maTaiKhoan}")]
-        public async Task<IActionResult> GetDiaDiemDLByTaiKhoan(string maTaiKhoan)
-        {
-            try
-            {
-                // Kiểm tra quyền: Admin hoặc chính tài khoản đó
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-                var userMaTK = User.FindFirst("MaTK")?.Value;
-
-                if (userRole != "1" && userMaTK != maTaiKhoan)
-                {
-                    return Forbid();
-                }
-
-                var diaDiemDLs = await _diaDiemDLRepository.GetDiaDiemDLByTaiKhoanAsync(maTaiKhoan);
-                return Ok(diaDiemDLs);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "Lỗi khi lấy danh sách địa điểm du lịch theo tài khoản", Error = ex.Message });
-            }
-        }
-
         // POST: api/DiaDiemDL
         [HttpPost]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được tạo
         public async Task<IActionResult> CreateDiaDiemDL(DiaDiemDLCreateDTO diaDiemDLDTO)
         {
             try
@@ -115,6 +92,7 @@ namespace WebDuLich.Controllers
 
         // PUT: api/DiaDiemDL/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được cập nhật
         public async Task<IActionResult> UpdateDiaDiemDL(string id, DiaDiemDLUpdateDTO diaDiemDLDTO)
         {
             try
@@ -122,15 +100,6 @@ namespace WebDuLich.Controllers
                 var diaDiemDL = await _diaDiemDLRepository.GetDiaDiemDLByIdAsync(id);
                 if (diaDiemDL == null)
                     return NotFound(new { Message = $"Không tìm thấy địa điểm du lịch với mã {id}" });
-
-                // Kiểm tra quyền: Admin hoặc chính người tạo
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-                var userMaTK = User.FindFirst("MaTK")?.Value;
-
-                if (userRole != "1" && userMaTK != diaDiemDL.MaTaiKhoan)
-                {
-                    return Forbid();
-                }
 
                 var updatedDiaDiemDL = await _diaDiemDLRepository.UpdateDiaDiemDLAsync(id, diaDiemDLDTO);
                 return Ok(updatedDiaDiemDL);
@@ -143,6 +112,7 @@ namespace WebDuLich.Controllers
 
         // DELETE: api/DiaDiemDL/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "1")] // Chỉ Admin mới được xóa
         public async Task<IActionResult> DeleteDiaDiemDL(string id)
         {
             try
@@ -150,15 +120,6 @@ namespace WebDuLich.Controllers
                 var diaDiemDL = await _diaDiemDLRepository.GetDiaDiemDLByIdAsync(id);
                 if (diaDiemDL == null)
                     return NotFound(new { Message = $"Không tìm thấy địa điểm du lịch với mã {id}" });
-
-                // Kiểm tra quyền: Admin hoặc chính người tạo
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-                var userMaTK = User.FindFirst("MaTK")?.Value;
-
-                if (userRole != "1" && userMaTK != diaDiemDL.MaTaiKhoan)
-                {
-                    return Forbid();
-                }
 
                 var result = await _diaDiemDLRepository.DeleteDiaDiemDLAsync(id);
                 return Ok(new { Message = "Xóa địa điểm du lịch thành công" });

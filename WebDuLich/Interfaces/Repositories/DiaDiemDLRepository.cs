@@ -61,22 +61,6 @@ namespace WebDuLich.Interfaces.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<DiaDiemDLDTO>> GetDiaDiemDLByTaiKhoanAsync(string maTaiKhoan)
-        {
-            return await _context.DiaDiemDuLichs
-                .Where(d => d.MaTaiKhoan == maTaiKhoan)
-                .Select(d => new DiaDiemDLDTO
-                {
-                    MaDiaDiem = d.MaDiaDiem,
-                    MaTaiKhoan = d.MaTaiKhoan,
-                    TieuDe = d.TieuDe,
-                    MoTa = d.MoTa,
-                    MaTinh = d.MaTinh,
-                    NgayTao = d.NgayTao
-                })
-                .ToListAsync();
-        }
-
         public async Task<DiaDiemDLDTO> CreateDiaDiemDLAsync(string maTaiKhoan, DiaDiemDLCreateDTO diaDiemDLDTO)
         {
             var diaDiemDL = new DiaDiemDuLich
