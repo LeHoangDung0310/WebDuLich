@@ -157,6 +157,7 @@ builder.Services.AddScoped<IAnhKSRepository, AnhKSRepository>(); // Added line
 builder.Services.AddScoped<IAnhNHRepository, AnhNHRepository>(); // Added line
 builder.Services.AddScoped<IPhongKSRepository, PhongKSRepository>();
 builder.Services.AddScoped<IDatPhongRepository, DatPhongRepository>();
+builder.Services.AddScoped<IDiaDiemDLRepository, DiaDiemDLRepository>();
 
 var app = builder.Build();
 
