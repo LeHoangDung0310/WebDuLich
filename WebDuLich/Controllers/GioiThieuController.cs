@@ -19,6 +19,7 @@ namespace WebDuLich.Controllers
         // GET: api/GioiThieu
         [HttpGet]
         [AllowAnonymous]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> GetAll()
         {
             var list = await _repo.GetAllAsync();
@@ -28,6 +29,7 @@ namespace WebDuLich.Controllers
         // GET: api/GioiThieu/5
         [HttpGet("{id}")]
         [AllowAnonymous]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _repo.GetByIdAsync(id);
